@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Minha Carteira</title>
+  <meta name="robots" content="noindex, nofollow">
+  <!--
+    WRAPPER ANTI /u/N/ — por que este arquivo existe
+    -------------------------------------------------
+    O web app do Apps Script e servido em script.google.com/macros/s/.../exec.
+    Com 2+ contas Google logadas, o Google reescreve a /exec para /u/0/, /u/1/...
+    chuta o indice errado e mostra "Nao foi possivel abrir o arquivo". Carregando a
+    MESMA /exec dentro de um <iframe credentialless> a partir de um dominio que NAO
+    e google.com, o app abre igual em qualquer navegador.
+
+    A casa ja resolveu isto duas vezes: Gerenciador de Escrituras (#9) e Simulador
+    de Fluxo (#11). Este e o mesmo padrao.
+
+    PRE-REQUISITOS, e os dois tem de valer:
+      1. Implantacao com "Executar como: Eu" + "Quem pode acessar: Qualquer pessoa".
+         Declarado em `apps-script/appsscript.json` (`webapp.access:
+         ANYONE_ANONYMOUS`) e travado por `tests/projeto.test.js`. Sem isto o
+         Google devolve a tela de login com `X-Frame-Options: DENY` e o iframe
+         morre — medido em 29/08, quando o deployment @1 nasceu restrito.
+      2. `doGet()` com `setXFrameOptionsMode(ALLOWALL)`. Ja esta em `Codigo.gs`.
+
+    O QUE ISTO NAO E: nao e uma camada de seguranca. Quem barra e o PIN, dentro do
+    app. Este arquivo so resolve roteamento de conta.
+
+    E POR QUE O LINK DELA APONTA PARA CA, E NAO PARA A /exec: o dia em que o
+    deployment for recriado, a /exec muda. Trocando o endereco aqui dentro, o link
+    que ela salvou na tela inicial do celular continua o mesmo.
+  -->
+  <style>
+    :root { color-scheme: light; }
+    html, body { margin: 0; height: 100%; background: #ECE4D5; }
+    #app { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+    .aviso {
+      position: fixed; inset: 0; display: none;
+      align-items: center; justify-content: center; padding: 24px;
+      font: 15px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: #273A38; text-align: center;
+    }
+    .aviso a { color: #2A1A14; font-weight: 600; }
+    .carregando {
+      position: fixed; inset: 0; display: flex;
+      align-items: center; justify-content: center;
+      font: 14px Inter, ui-sans-serif, system-ui, sans-serif; color: #595E59;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="carregando" id="carregando">Abrindo a sua carteira…</div>
+
+  <!--
+    credentialless: carrega o iframe num contexto efemero, SEM os cookies de sessao
+    do Google (como uma aba anonima) — e e isso que contorna o roteador /u/N/.
+    Chromium (Chrome/Edge 110+). Firefox e Safari ignoram o atributo; para eles o
+    aviso abaixo oferece o link direto depois de 12s.
+  -->
+  <iframe
+    id="app"
+    credentialless
+    src="https://script.google.com/macros/s/AKfycbwEZO5ppaTKwPH-XcKsBObqOj4qHH6g88Xg9zTixpr9g_uGaJxuDKL3lcpHit_w7SDzVw/exec"
+    title="Minha Carteira"
+    allow="clipboard-write; fullscreen"
+    referrerpolicy="no-referrer"
+    onload="document.getElementById('carregando').style.display='none'"></iframe>
+
+  <div class="aviso" id="aviso">
+    <div>
+      <p><strong>A carteira não abriu por aqui.</strong></p>
+      <p>Abra direto neste link:<br>
+        <a href="https://script.google.com/macros/s/AKfycbwEZO5ppaTKwPH-XcKsBObqOj4qHH6g88Xg9zTixpr9g_uGaJxuDKL3lcpHit_w7SDzVw/exec"
+           target="_blank" rel="noopener">abrir a Minha Carteira</a>
+      </p>
+      <p style="color:#595E59;font-size:13px">Se pedir para escolher uma conta do Google,
+        escolha a sua — a mesma de sempre.</p>
+    </div>
+  </div>
+
+  <script>
+    // Se o iframe nao sinalizar load em ~12s, oferece o link direto em vez de
+    // deixar a pessoa olhando para "Abrindo a sua carteira..." para sempre.
+    setTimeout(function () {
+      var ld = document.getElementById('carregando');
+      if (ld && ld.style.display !== 'none') {
+        ld.style.display = 'none';
+        document.getElementById('aviso').style.display = 'flex';
+      }
+    }, 12000);
+  </script>
+</body>
+</html>
